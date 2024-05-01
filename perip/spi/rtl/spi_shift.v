@@ -118,7 +118,7 @@ module spi_shift (clk, rst, latch, byte_sel, len, lsb, go,
     if (rst)
       s_out   <= #Tp 1'b0;
     else
-      s_out <= #Tp (tx_clk || !tip) ? data[tx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]] : s_out;
+      s_out <= #Tp (tx_clk || !tip) ? data[tx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]] : s_out; // zyy: master to slave
   end
 
   // Receiving bits from the line
@@ -127,7 +127,7 @@ module spi_shift (clk, rst, latch, byte_sel, len, lsb, go,
     if (rst)
       data   <= #Tp {`SPI_MAX_CHAR{1'b0}};
 `ifdef SPI_MAX_CHAR_128
-    else if (latch[0] && !tip)
+    else if (latch[0] && !tip) // zyy: cpu to master
       begin
         if (byte_sel[3])
           data[31:24] <= #Tp p_in[31:24];
@@ -230,7 +230,7 @@ module spi_shift (clk, rst, latch, byte_sel, len, lsb, go,
 `endif
 `endif
     else
-      data[rx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]] <= #Tp rx_clk ? s_in : data[rx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]];
+      data[rx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]] <= #Tp rx_clk ? s_in : data[rx_bit_pos[`SPI_CHAR_LEN_BITS-1:0]]; //zyy: miso, slave to master
   end
 
 endmodule

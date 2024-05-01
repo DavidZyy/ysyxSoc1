@@ -15,7 +15,7 @@ module flash (
   reg [2:0]  state;
   reg [7:0]  counter;
   reg [7:0]  cmd;
-  reg [23:0] addr;
+  reg [23:0] addr; // addr has only 24 bits, totally 16MB?
   reg [31:0] data;
 
   wire ren = (state == addr_t) && (counter == 8'd23);
@@ -29,6 +29,7 @@ module flash (
     .data(rdata)
   );
 
+  // state machine
   always@(posedge sck or posedge reset) begin
     if (reset) state <= cmd_t;
     else begin
@@ -47,6 +48,7 @@ module flash (
     end
   end
 
+  // counter
   always@(posedge sck or posedge reset) begin
     if (reset) counter <= 8'd0;
     else begin
@@ -58,17 +60,20 @@ module flash (
     end
   end
 
+  // cmd
   always@(posedge sck or posedge reset) begin
     if (reset)               cmd <= 8'd0;
     else if (state == cmd_t) cmd <= { cmd[6:0], mosi };
   end
 
+  // addr
   always@(posedge sck or posedge reset) begin
     if (reset) addr <= 24'd0;
     else if (state == addr_t && counter < 8'd23)
       addr <= { addr[22:0], mosi };
   end
 
+  // transfer data
   wire [31:0] data_bswap = {rdata[7:0], rdata[15:8], rdata[23:16], rdata[31:24]};
   always@(posedge sck or posedge reset) begin
     if (reset) data <= 32'd0;

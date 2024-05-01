@@ -362,8 +362,8 @@ wire       thre_int; // transmitter holding register empty interrupt
 wire       ms_int;   // modem status interrupt
 
 // FIFO signals
-reg                             tf_push;
-reg                             rf_pop;
+reg                             tf_push; // zyy: transmitter fifo?
+reg                             rf_pop;   // zyy: receiver fifo?
 wire [`UART_FIFO_REC_WIDTH-1:0] rf_data_out;
 wire                            rf_error_bit; // an error (parity or framing) is inside the fifo
 wire                            rf_overrun; // added by Ando Ki

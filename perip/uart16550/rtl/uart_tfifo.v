@@ -188,8 +188,8 @@ wire [fifo_pointer_w-1:0] top_plus_1 = top + 1'b1;
 raminfr #(fifo_pointer_w,fifo_width,fifo_depth) tfifo
         (   .clk (clk),
             .we  (push),
-            .a   (top),
-            .dpra(bottom),
+            .a   (top),   // write pointer, write to top
+            .dpra(bottom), // read pointer, read from bottom
             .di  (data_in),
             .dpo (data_out)
         );
