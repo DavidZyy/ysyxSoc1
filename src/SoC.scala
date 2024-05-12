@@ -25,7 +25,7 @@ object AXI4SlaveNodeGenerator {
 
 class ysyxSoCASIC(implicit p: Parameters) extends LazyModule {
   val xbar = AXI4Xbar()
-  val xbar2 = AXI4Xbar()
+  // val xbar2 = AXI4Xbar()
   val apbxbar = LazyModule(new APBFanout).node
   val cpu = LazyModule(new CPU(idBits = ChipLinkParam.idBits))
   val chipMaster = if (Config.hasChipLink) Some(LazyModule(new ChipLinkMaster)) else None
@@ -39,20 +39,21 @@ class ysyxSoCASIC(implicit p: Parameters) extends LazyModule {
     AddressSet.misaligned(0x10001000, 0x1000) ++    // SPI controller
     AddressSet.misaligned(0x30000000, 0x10000000)   // XIP flash
   ))
-  // val lpsram = LazyModule(new APBPSRAM(AddressSet.misaligned(0x80000000L, 0x400000)))
+  val lpsram = LazyModule(new APBPSRAM(AddressSet.misaligned(0x80000000L, 0x400000))) // 4MB
   val lmrom = LazyModule(new AXI4MROM(AddressSet.misaligned(0x20000000, 0x1000)))
   val sramNode = AXI4RAM(AddressSet.misaligned(0x0f000000, 0x2000).head, false, true, 8, None, Nil, false)
 
-  val sdramAddressSet = AddressSet.misaligned(0xa0000000L, 0x2000000)
-  // val lsdram_apb = if (!Config.sdramUseAXI) Some(LazyModule(new APBSDRAM (sdramAddressSet))) else None
-  // val lsdram_axi = if ( Config.sdramUseAXI) Some(LazyModule(new AXI4SDRAM(sdramAddressSet))) else None
+  val sdramAddressSet = AddressSet.misaligned(0xa0000000L, 0x2000000) // 32MB
+  val lsdram_apb = if (!Config.sdramUseAXI) Some(LazyModule(new APBSDRAM (sdramAddressSet))) else None
+  val lsdram_axi = if ( Config.sdramUseAXI) Some(LazyModule(new AXI4SDRAM(sdramAddressSet))) else None
 
   // List(lspi.node, luart.node, lpsram.node, lgpio.node, lkeyboard.node, lvga.node).map(_ := apbxbar)
-  List(lspi.node, luart.node).map(_ := apbxbar)
-  List(apbxbar := APBDelayer() := AXI4ToAPB(), lmrom.node, sramNode).map(_ := xbar2)
-  xbar2 := AXI4UserYanker(Some(1)) := AXI4Fragmenter() := xbar
-  // if (Config.sdramUseAXI) lsdram_axi.get.node := ysyx.AXI4Delayer() := xbar
-  // else                    lsdram_apb.get.node := apbxbar
+  List(lspi.node, luart.node, lpsram.node).map(_ := apbxbar)
+  // List(lspi.node, luart.node).map(_ := apbxbar)
+  List(apbxbar := APBDelayer() := AXI4ToAPB(), lmrom.node, sramNode).map(_ := xbar)
+  // xbar2 := AXI4UserYanker(Some(1)) := AXI4Fragmenter() := xbar
+  if (Config.sdramUseAXI) lsdram_axi.get.node := ysyx.AXI4Delayer() := xbar
+  else                    lsdram_apb.get.node := apbxbar
   if (Config.hasChipLink) chiplinkNode.get := xbar
   xbar := cpu.masterNode
  
@@ -80,21 +81,21 @@ class ysyxSoCASIC(implicit p: Parameters) extends LazyModule {
     val intr_from_chipSlave = IO(Input(Bool()))
     cpu.module.interrupt := intr_from_chipSlave
 
-    // val sdramBundle = if (Config.sdramUseAXI) lsdram_axi.get.module.sdram_bundle
-    //                   else                    lsdram_apb.get.module.sdram_bundle
+    val sdramBundle = if (Config.sdramUseAXI) lsdram_axi.get.module.sdram_bundle
+                      else                    lsdram_apb.get.module.sdram_bundle
 
     // expose slave I/O interface as ports
     val spi = IO(chiselTypeOf(lspi.module.spi_bundle))
     val uart = IO(chiselTypeOf(luart.module.uart))
-    // val psram = IO(chiselTypeOf(lpsram.module.qspi_bundle))
-    // val sdram = IO(chiselTypeOf(sdramBundle))
+    val psram = IO(chiselTypeOf(lpsram.module.qspi_bundle))
+    val sdram = IO(chiselTypeOf(sdramBundle))
     // val gpio = IO(chiselTypeOf(lgpio.module.gpio_bundle))
     // val ps2 = IO(chiselTypeOf(lkeyboard.module.ps2_bundle))
     // val vga = IO(chiselTypeOf(lvga.module.vga_bundle))
     uart <> luart.module.uart
     spi <> lspi.module.spi_bundle
-    // psram <> lpsram.module.qspi_bundle
-    // sdram <> sdramBundle
+    psram <> lpsram.module.qspi_bundle
+    sdram <> sdramBundle
     // gpio <> lgpio.module.gpio_bundle
     // ps2 <> lkeyboard.module.ps2_bundle
     // vga <> lvga.module.vga_bundle
@@ -146,10 +147,10 @@ class ysyxSoCFull(implicit p: Parameters) extends LazyModule {
     masic.spi.miso := List(bitrev.io, flash.io).map(_.miso).reduce(_||_)
     // masic.spi.miso := List(bitrev.io).map(_.miso).reduce(_&&_)
 
-    // val psram = Module(new psram)
-    // psram.io <> masic.psram
-    // val sdram = Module(new sdram)
-    // sdram.io <> masic.sdram
+    val psram = Module(new psram)
+    psram.io <> masic.psram
+    val sdram = Module(new sdram)
+    sdram.io <> masic.sdram
 
     val externalPins = IO(new Bundle{
       // val gpio = chiselTypeOf(masic.gpio)

@@ -102,6 +102,7 @@ module EF_PSRAM_CTRL_wb (
 
 
 
+    /* zyy: chage the shifted wdata to unshifted wdata? */
     wire [7:0]  byte0 = (sel_i[0])          ? dat_i[7:0]   :
                         (sel_i[1] & size==1)? dat_i[15:8]  :
                         (sel_i[2] & size==1)? dat_i[23:16] :

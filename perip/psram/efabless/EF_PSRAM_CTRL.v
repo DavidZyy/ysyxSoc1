@@ -161,6 +161,7 @@ module PSRAM_WRITER (
     localparam  IDLE = 1'b0,
                 WRITE = 1'b1;
 
+    /* not always write 32 bits */
     wire[7:0]        FINAL_COUNT = 13 + size*2;
 
     reg         state, nstate;

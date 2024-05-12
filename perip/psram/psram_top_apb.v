@@ -14,7 +14,7 @@ module psram_top_apb (
 
   output qspi_sck,
   output qspi_ce_n,
-  inout  [3:0] qspi_dio
+  inout  [3:0] qspi_dio // in: rdata, out: raddr, waddr, wdata
 );
 
   wire [3:0] din, dout, douten;
