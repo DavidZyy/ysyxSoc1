@@ -149,8 +149,34 @@ class ysyxSoCFull(implicit p: Parameters) extends LazyModule {
 
     val psram = Module(new psram)
     psram.io <> masic.psram
-    val sdram = Module(new sdram)
-    sdram.io <> masic.sdram
+
+    val sdram0 = Module(new sdram)
+    val sdram1 = Module(new sdram)
+    // val m2s = Module(new sdram_m2s)
+    // m2s.io.in <> masic.sdram
+    // sdram0.io <> m2s.io.out0
+    // sdram1.io <> m2s.io.out1
+    sdram0.io.clk := masic.sdram.clk
+    sdram0.io.cke := masic.sdram.cke
+    sdram0.io.cs  := masic.sdram.cs
+    sdram0.io.ras := masic.sdram.ras
+    sdram0.io.cas := masic.sdram.cas
+    sdram0.io.we  := masic.sdram.we
+    sdram0.io.a   := masic.sdram.a
+    sdram0.io.ba  := masic.sdram.ba
+    sdram0.io.dqm := masic.sdram.dqm(1, 0)
+    sdram0.io.dq  <> masic.sdram.dq0
+
+    sdram1.io.clk := masic.sdram.clk
+    sdram1.io.cke := masic.sdram.cke
+    sdram1.io.cs  := masic.sdram.cs
+    sdram1.io.ras := masic.sdram.ras
+    sdram1.io.cas := masic.sdram.cas
+    sdram1.io.we  := masic.sdram.we
+    sdram1.io.a   := masic.sdram.a
+    sdram1.io.ba  := masic.sdram.ba
+    sdram1.io.dqm := masic.sdram.dqm(3, 2)
+    sdram1.io.dq  <> masic.sdram.dq1
 
     val externalPins = IO(new Bundle{
       // val gpio = chiselTypeOf(masic.gpio)

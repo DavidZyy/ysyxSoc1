@@ -1,0 +1,1 @@
+delete .metals and .bloop, or metals will 卡死电脑。

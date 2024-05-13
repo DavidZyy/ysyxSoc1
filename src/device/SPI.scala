@@ -159,7 +159,7 @@ class APBSPI(address: Seq[AddressSet])(implicit p: Parameters) extends LazyModul
     ))
     mspi.io.in.pstrb := MuxLookup(state, "b1111".U)(List(
       s_idle   -> in.pstrb,
-      // s_xip_ss -> "0b1111".U,
+      // s_xip_ss -> "0b1111".U, //0b is not right!! and will compile failed not give error, waste a lot of time.
     ))
     in.pready := MuxLookup(state, false.B)(List( // also act like r.valid in axi4
       s_idle   -> Mux(!accessFlash, mspi.io.in.pready, false.B),
