@@ -43,7 +43,7 @@ class ysyxSoCASIC(implicit p: Parameters) extends LazyModule {
   val lmrom = LazyModule(new AXI4MROM(AddressSet.misaligned(0x20000000, 0x1000)))
   val sramNode = AXI4RAM(AddressSet.misaligned(0x0f000000, 0x2000).head, false, true, 8, None, Nil, false)
 
-  val sdramAddressSet = AddressSet.misaligned(0xa0000000L, 0x2000000) // 32MB
+  val sdramAddressSet = AddressSet.misaligned(0xa0000000L, 0x2000000*4) //0x2000000 is 32MB, one sdram is 32MB, bit and byte extension to 128MB
   val lsdram_apb = if (!Config.sdramUseAXI) Some(LazyModule(new APBSDRAM (sdramAddressSet))) else None
   val lsdram_axi = if ( Config.sdramUseAXI) Some(LazyModule(new AXI4SDRAM(sdramAddressSet))) else None
 
@@ -152,13 +152,15 @@ class ysyxSoCFull(implicit p: Parameters) extends LazyModule {
 
     val sdram0 = Module(new sdram)
     val sdram1 = Module(new sdram)
+    val sdram2 = Module(new sdram)
+    val sdram3 = Module(new sdram)
     // val m2s = Module(new sdram_m2s)
     // m2s.io.in <> masic.sdram
     // sdram0.io <> m2s.io.out0
     // sdram1.io <> m2s.io.out1
     sdram0.io.clk := masic.sdram.clk
     sdram0.io.cke := masic.sdram.cke
-    sdram0.io.cs  := masic.sdram.cs
+    sdram0.io.cs  := masic.sdram.cs0
     sdram0.io.ras := masic.sdram.ras
     sdram0.io.cas := masic.sdram.cas
     sdram0.io.we  := masic.sdram.we
@@ -169,7 +171,7 @@ class ysyxSoCFull(implicit p: Parameters) extends LazyModule {
 
     sdram1.io.clk := masic.sdram.clk
     sdram1.io.cke := masic.sdram.cke
-    sdram1.io.cs  := masic.sdram.cs
+    sdram1.io.cs  := masic.sdram.cs0
     sdram1.io.ras := masic.sdram.ras
     sdram1.io.cas := masic.sdram.cas
     sdram1.io.we  := masic.sdram.we
@@ -177,6 +179,29 @@ class ysyxSoCFull(implicit p: Parameters) extends LazyModule {
     sdram1.io.ba  := masic.sdram.ba
     sdram1.io.dqm := masic.sdram.dqm(3, 2)
     sdram1.io.dq  <> masic.sdram.dq1
+
+    sdram2.io.clk := masic.sdram.clk
+    sdram2.io.cke := masic.sdram.cke
+    sdram2.io.cs  := masic.sdram.cs1
+    sdram2.io.ras := masic.sdram.ras
+    sdram2.io.cas := masic.sdram.cas
+    sdram2.io.we  := masic.sdram.we
+    sdram2.io.a   := masic.sdram.a
+    sdram2.io.ba  := masic.sdram.ba
+    // sdram2.io.dqm := masic.sdram.dqm(3, 2) // bugs here!
+    sdram2.io.dqm := masic.sdram.dqm(1, 0)
+    sdram2.io.dq  <> masic.sdram.dq2
+
+    sdram3.io.clk := masic.sdram.clk
+    sdram3.io.cke := masic.sdram.cke
+    sdram3.io.cs  := masic.sdram.cs1
+    sdram3.io.ras := masic.sdram.ras
+    sdram3.io.cas := masic.sdram.cas
+    sdram3.io.we  := masic.sdram.we
+    sdram3.io.a   := masic.sdram.a
+    sdram3.io.ba  := masic.sdram.ba
+    sdram3.io.dqm := masic.sdram.dqm(3, 2)
+    sdram3.io.dq  <> masic.sdram.dq3
 
     val externalPins = IO(new Bundle{
       // val gpio = chiselTypeOf(masic.gpio)
